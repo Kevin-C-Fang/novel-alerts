@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtWidgets import QVBoxLayout
+from PyQt5.QtWidgets import QMessageBox
 
 from functools import partial 
 
@@ -99,7 +100,11 @@ class NovelAlertsApp(QMainWindow):
         # Adds horizontal button layout to generalVLayout
         self.generalVLayout.addLayout(horizontalLayout)
 
-    def clearTextField(textF):
+    def getDisplayText(self, textF):
+        """Get the specific text fields text"""
+        return textF.text()
+    
+    def clearTextField(self, textF):
         """Clears the text field when enter/delete btns are clicked"""
         textF.clear()
         textF.setFocus()
@@ -114,9 +119,36 @@ class NovelAlertsCtrl:
         # Connect btn signals to slots
         self._connectSignals()
 
+    def _checkEnter(self):
+        """Check input from both textfields and enter data in model acccordingly"""
+        # Iterates through text fields and calls add/set functions depending on the text within the QLineEdit
+        for key, value in self._view.textF.items():
+            if self._view.getDisplayText(self._view.textF[key]) != "" and key == "Email":
+                self._model._setEmail(value.text())
+            if self._view.getDisplayText(self._view.textF[key]) != "" and key == "URL":
+                self._model._addURL(value.text())
+            self._view.clearTextField(self._view.textF[key])
+
+    def _checkDelete(self):
+        """Check input from both textfields and delete data in model accordingly"""
+        def _onDeleteEmail():
+            """Alert box for if user tries to delete email instead of enter new one"""
+            alert = QMessageBox()
+            alert.setText("ERROR: Cannot delete email, only enter in new one")
+            alert.exec_()
+
+        # Iterates through text fields and calls delete functions depending on the text within the QLineEdit
+        for key, value in self._view.textF.items():
+            if self._view.getDisplayText(self._view.textF[key]) != "" and key == "Email":
+                _onDeleteEmail()
+            if self._view.getDisplayText(self._view.textF[key]) != "" and key == "URL":
+                self._model._deleteURL(value.text())
+            self._view.clearTextField(self._view.textF[key])  
+
     def _connectSignals(self):
         """Connect signals and slots"""
-        pass
+        self._view.enterBtn.clicked.connect(lambda: self._checkEnter())
+        self._view.deleteBtn.clicked.connect(lambda: self._checkDelete())
 
 # Client code
 def main():
@@ -129,8 +161,10 @@ def main():
     window = NovelAlertsApp()
     # Shows GUI through a paint event. Think of it like a stack. 
     window.show()
-    # Create instances of the model and controller
-    NovelAlertsCtrl(model=NovelAlertsModel, view=window)
+    # Create an instance of model
+    model = NovelAlertsModel()
+    # Create instance of the controller
+    NovelAlertsCtrl(model=model, view=window)
     # Run app's event loop or main loop.
     # Allows for clean exit and release of memory resources.
     sys.exit(app.exec_())
