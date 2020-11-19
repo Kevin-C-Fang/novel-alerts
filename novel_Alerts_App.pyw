@@ -3,7 +3,7 @@
 # Filename: novel_Alerts_App.pyw
 
 """
-    Novel alerts is a simple GUI that allows the user to enter in data so that the application can web scrape novelupdates.com and send email alerts when updates occur.
+    Novel alerts is a simple GUI that allows the user to enter in data so that the application can web scrape novelupdates.com and send email alerts when updates are detected.
 """
 
 import sys
@@ -21,8 +21,9 @@ from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtWidgets import QVBoxLayout
 
-# from functools import partial 
-# If i want extra parameters for slots
+from functools import partial 
+
+from model import NovelAlertsModel
 
 
 # Create a subclass of QMainWindow to setup novel alerts GUI
@@ -33,9 +34,7 @@ class NovelAlertsApp(QMainWindow):
         super().__init__()
         # Gets the title to the app window.
         self.setWindowTitle("Novel-Alerts | PyQt5 Desktop Application | Webscraper")
-        # Set the size of the window and where to place it on the screen.
-        # First two parameters are x and y cords on where window will be on screen.
-        # Last two parameters are width and height of the window.
+        # Set the size of the window
         self.setFixedSize(1120, 640)
         # Set general layout
         self.generalVLayout = QVBoxLayout()
@@ -47,56 +46,77 @@ class NovelAlertsApp(QMainWindow):
         # Set the layout onto the central widget
         self._centralWidget.setLayout(self.generalVLayout)
         # Moves the window to cords on screen.
-        self.move(350, 230)
-        # Creates central display
-        self._createCentralDisplay()
+        self.move(400, 200)
+        # Create and add QlineEdit Widget to generalVLayout
+        self._createTextField()
+        # Create and add Create/delet buttons
+        self._createButton()
         # Set layout properties for vertical layout
-        self.generalVLayout.setContentsMargins(25, 225, 0, 325)
+        self.generalVLayout.setContentsMargins(300, 200, 300, 250)
 
-    def _createCentralDisplay(self):
-        """Creates the central display"""
-        btnList = ["Email", "URL"]
-        for i in range(2):
-            # Define horizontal layout
-            horizontalLayout = QHBoxLayout()
-            # Create and add QlineEdit Widget
-            self._createTextField(horizontalLayout, btnList[i])
-            # Create and add Create/delet buttons
-            self._createButton(horizontalLayout)
-            # Set layout properties for horizontal layout
-            horizontalLayout.setContentsMargins(300, 0, 300, 0)
-            # Add to generalVLayout
-            self.generalVLayout.addLayout(horizontalLayout)
-
-    def _createTextField(self, horizontalLayout, placeHolder):
+    def _createTextField(self):
         """Create display for input field"""
-        # Create the textfield widget
-        self.textField = QLineEdit()
-        # Set textfield properties
-        self.textField.setFixedHeight(30)
-        self.textField.setFixedWidth(300)
-        self.textField.setAlignment(Qt.AlignRight)
-        self.textField.setPlaceholderText(placeHolder)
-        self.textField.setClearButtonEnabled(True)
-        # Add the textfield to the horizontal layout
-        horizontalLayout.addWidget(self.textField)
+        self.textF = {}
+        dataInput = ["Email", "URL"]
 
-    def _createButton(self, horizontalLayout):
+        # Create the textfield widget
+        self.textF[dataInput[0]] = QLineEdit()
+        self.textF[dataInput[1]] = QLineEdit()
+
+        def _setTextFieldProperties(lineEditObj, placeHolder):
+            """Set textfield properties and adds QLineEdit to generalVLayout"""
+            lineEditObj.setFixedHeight(35)
+            lineEditObj.setFixedWidth(500)
+            lineEditObj.setAlignment(Qt.AlignLeft)
+            lineEditObj.setPlaceholderText(placeHolder)
+            lineEditObj.setClearButtonEnabled(True)
+            # Add the textfield to the general vertical layout
+            self.generalVLayout.addWidget(lineEditObj)
+        
+        # Call _setTextFieldProperties to keep code DRY
+        _setTextFieldProperties(self.textF[dataInput[0]], dataInput[0])
+        _setTextFieldProperties(self.textF[dataInput[1]], dataInput[1])
+
+    def _createButton(self):
         """Create display for enter/delete buttons"""
+        # horizontal layout to make buttons look better
+        horizontalLayout = QHBoxLayout()
+
         # Create button for entering data
         self.enterBtn = QPushButton("Enter")
         self.deleteBtn = QPushButton("Delete")
-        # Settin button properties
-        self.enterBtn.setFixedSize(60, 35)
-        self.deleteBtn.setFixedSize(60, 35)
-        # Add the enter/delete buttons to the horizontal layout
-        horizontalLayout.addWidget(self.enterBtn)
-        horizontalLayout.addWidget(self.deleteBtn)
+        def _setButtonProperties(buttonObj):
+            """Set button properties and add QPushButton to horizontal layout"""
+            buttonObj.setFixedSize(60, 35)
+            # Add the enter/delete buttons to the horizontal layout
+            horizontalLayout.addWidget(buttonObj)
 
-    def clearTextField(self):
+        # Call _setButtonProperties to keep code DRY
+        _setButtonProperties(self.enterBtn)
+        _setButtonProperties(self.deleteBtn)
+        # Set horizontal layout properties
+        horizontalLayout.setContentsMargins(200, 0, 200, 0)
+        # Adds horizontal button layout to generalVLayout
+        self.generalVLayout.addLayout(horizontalLayout)
+
+    def clearTextField(textF):
         """Clears the text field when enter/delete btns are clicked"""
-        self.textField.clear()
-        self.textField.setFocus()
+        textF.clear()
+        textF.setFocus()
+
+# Constroller class to connect the view (GUI) and the model
+class NovelAlertsCtrl:
+    """Novel Alerts Controller class"""
+    def __init__(self, model, view):
+        """Controller initializer"""
+        self._view = view
+        self._model = model
+        # Connect btn signals to slots
+        self._connectSignals()
+
+    def _connectSignals(self):
+        """Connect signals and slots"""
+        pass
 
 # Client code
 def main():
@@ -109,6 +129,8 @@ def main():
     window = NovelAlertsApp()
     # Shows GUI through a paint event. Think of it like a stack. 
     window.show()
+    # Create instances of the model and controller
+    NovelAlertsCtrl(model=NovelAlertsModel, view=window)
     # Run app's event loop or main loop.
     # Allows for clean exit and release of memory resources.
     sys.exit(app.exec_())
