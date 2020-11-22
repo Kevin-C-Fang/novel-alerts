@@ -48,6 +48,8 @@ class NovelAlertsApp(QMainWindow):
         self._centralWidget.setLayout(self.generalVLayout)
         # Moves the window to cords on screen.
         self.move(400, 200)
+        # Create and add QLabel widget to generalVLayout
+        self._createPasswordMsg()
         # Create and add QlineEdit Widget to generalVLayout
         self._createTextField()
         # Create and add Create/delet buttons
@@ -55,14 +57,25 @@ class NovelAlertsApp(QMainWindow):
         # Set layout properties for vertical layout
         self.generalVLayout.setContentsMargins(300, 200, 300, 250)
 
+    def _createPasswordMsg(self):
+        """Creates a QLabel msg if password is not entered in"""
+        # Create Qlabel
+        self.message = QLabel("<h2>Password must be entered to enable web scraping!</h2>")
+
+        self.message.setAlignment(Qt.AlignCenter)
+        self.message.setWordWrap(True)
+
+        # Add to general layout
+        self.generalVLayout.addWidget( self.message)
+
     def _createTextField(self):
         """Create display for input field"""
         self.textF = {}
-        dataInput = ["Email", "URL"]
+        dataInput = ["Email", "Password", "URL"]
 
         # Create the textfield widget
-        self.textF[dataInput[0]] = QLineEdit()
-        self.textF[dataInput[1]] = QLineEdit()
+        for dataLabel in dataInput:
+            self.textF[dataLabel] = QLineEdit()
 
         def _setTextFieldProperties(lineEditObj, placeHolder):
             """Set textfield properties and adds QLineEdit to generalVLayout"""
@@ -73,10 +86,10 @@ class NovelAlertsApp(QMainWindow):
             lineEditObj.setClearButtonEnabled(True)
             # Add the textfield to the general vertical layout
             self.generalVLayout.addWidget(lineEditObj)
-        
+    
         # Call _setTextFieldProperties to keep code DRY
-        _setTextFieldProperties(self.textF[dataInput[0]], dataInput[0])
-        _setTextFieldProperties(self.textF[dataInput[1]], dataInput[1])
+        for dataLabel in dataInput:
+            _setTextFieldProperties(self.textF[dataLabel], dataLabel)
 
     def _createButton(self):
         """Create display for enter/delete buttons"""
@@ -119,30 +132,35 @@ class NovelAlertsCtrl:
         # Connect btn signals to slots
         self._connectSignals()
 
+    def _errorMsg(self, msg):
+        """Alert box for if user tries to delete email instead of enter new one"""
+        alert = QMessageBox()
+        alert.setText(msg)
+        alert.exec_()
+
     def _checkEnter(self):
         """Check input from both textfields and enter data in model acccordingly"""
         # Iterates through text fields and calls add/set functions depending on the text within the QLineEdit
         for key, value in self._view.textF.items():
             if self._view.getDisplayText(self._view.textF[key]) != "" and key == "Email":
                 self._model._setEmail(value.text())
+            if self._view.getDisplayText(self._view.textF[key]) != "" and key == "Password":
+                self._model._setPassword(value.text())
+                self._view.message.setText("")
             if self._view.getDisplayText(self._view.textF[key]) != "" and key == "URL":
-                self._model._addURL(value.text())
+                msg = self._model._addURL(value.text())
+                if msg != None:
+                    self._errorMsg(msg)
             self._view.clearTextField(self._view.textF[key])
 
     def _checkDelete(self):
         """Check input from both textfields and delete data in model accordingly"""
-        def _onDeleteEmail():
-            """Alert box for if user tries to delete email instead of enter new one"""
-            alert = QMessageBox()
-            alert.setText("ERROR: Cannot delete email, only enter in new one")
-            alert.exec_()
-
         # Iterates through text fields and calls delete functions depending on the text within the QLineEdit
         for key, value in self._view.textF.items():
             if self._view.getDisplayText(self._view.textF[key]) != "" and key == "Email":
-                _onDeleteEmail()
+                self._errorMsg("ERROR: Cannot delete email, only enter in new one!")
             if self._view.getDisplayText(self._view.textF[key]) != "" and key == "URL":
-                self._model._deleteURL(value.text())
+                self._model._deleteURL(value.text(), self._errorMsg)
             self._view.clearTextField(self._view.textF[key])  
 
     def _connectSignals(self):
