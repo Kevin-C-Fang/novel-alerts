@@ -6,27 +6,22 @@
     Novel alerts is a simple GUI that allows the user to enter in data so that the application can web scrape novelupdates.com and send email alerts when updates are detected.
 """
 
+#Import sys for clean closing of application memory
 import sys
 
 # Import QApplication and the required widgets from PyQt5.QtWidgets
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtWidgets import QLabel
-from PyQt5.QtWidgets import QMainWindow
-from PyQt5.QtWidgets import QWidget
-
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QHBoxLayout
-from PyQt5.QtWidgets import QLineEdit
-from PyQt5.QtWidgets import QPushButton
-from PyQt5.QtWidgets import QVBoxLayout
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import (QApplication, QHBoxLayout, QLabel, QLineEdit,
+                             QMainWindow, QMessageBox, QPushButton,
+                             QVBoxLayout, QWidget)
 
-from functools import partial 
-
+from controller import NovelAlertsCtrl
+# Import NovelAlertsModel class to connect view and model through controller class
 from model import NovelAlertsModel
 
 
+# Note subclass of Qmainwindow in docstring in classs
 # Create a subclass of QMainWindow to setup novel alerts GUI
 class NovelAlertsApp(QMainWindow):
     """NovelAlertsApp View (GUI)"""
@@ -55,18 +50,20 @@ class NovelAlertsApp(QMainWindow):
         # Create and add Create/delet buttons
         self._createButton()
         # Set layout properties for vertical layout
-        self.generalVLayout.setContentsMargins(300, 200, 300, 250)
+        self.generalVLayout.setContentsMargins(300, 200, 300, 225)
 
     def _createPasswordMsg(self):
         """Creates a QLabel msg if password is not entered in"""
         # Create Qlabel
-        self.message = QLabel("<h2>Password must be entered to enable web scraping!</h2>")
+        self.msgList = []
+        self.msgList.append(QLabel("<h2>Email must be entered to enable web scraping!</h2>"))
+        self.msgList.append(QLabel("<h2>Password must be entered to enable web scraping!</h2>"))
 
-        self.message.setAlignment(Qt.AlignCenter)
-        self.message.setWordWrap(True)
-
-        # Add to general layout
-        self.generalVLayout.addWidget( self.message)
+        for msg in self.msgList:
+            msg.setAlignment(Qt.AlignCenter)
+            msg.setWordWrap(True)
+            # Add to general layout
+            self.generalVLayout.addWidget(msg)
 
     def _createTextField(self):
         """Create display for input field"""
@@ -122,51 +119,13 @@ class NovelAlertsApp(QMainWindow):
         textF.clear()
         textF.setFocus()
 
-# Constroller class to connect the view (GUI) and the model
-class NovelAlertsCtrl:
-    """Novel Alerts Controller class"""
-    def __init__(self, model, view):
-        """Controller initializer"""
-        self._view = view
-        self._model = model
-        # Connect btn signals to slots
-        self._connectSignals()
-
-    def _errorMsg(self, msg):
+    def msgBox(self, msg):
         """Alert box for if user tries to delete email instead of enter new one"""
         alert = QMessageBox()
         alert.setText(msg)
         alert.exec_()
 
-    def _checkEnter(self):
-        """Check input from both textfields and enter data in model acccordingly"""
-        # Iterates through text fields and calls add/set functions depending on the text within the QLineEdit
-        for key, value in self._view.textF.items():
-            if self._view.getDisplayText(self._view.textF[key]) != "" and key == "Email":
-                self._model._setEmail(value.text())
-            if self._view.getDisplayText(self._view.textF[key]) != "" and key == "Password":
-                self._model._setPassword(value.text())
-                self._view.message.setText("")
-            if self._view.getDisplayText(self._view.textF[key]) != "" and key == "URL":
-                msg = self._model._addURL(value.text())
-                if msg != None:
-                    self._errorMsg(msg)
-            self._view.clearTextField(self._view.textF[key])
 
-    def _checkDelete(self):
-        """Check input from both textfields and delete data in model accordingly"""
-        # Iterates through text fields and calls delete functions depending on the text within the QLineEdit
-        for key, value in self._view.textF.items():
-            if self._view.getDisplayText(self._view.textF[key]) != "" and key == "Email":
-                self._errorMsg("ERROR: Cannot delete email, only enter in new one!")
-            if self._view.getDisplayText(self._view.textF[key]) != "" and key == "URL":
-                self._model._deleteURL(value.text(), self._errorMsg)
-            self._view.clearTextField(self._view.textF[key])  
-
-    def _connectSignals(self):
-        """Connect signals and slots"""
-        self._view.enterBtn.clicked.connect(lambda: self._checkEnter())
-        self._view.deleteBtn.clicked.connect(lambda: self._checkDelete())
 
 # Client code
 def main():
@@ -180,7 +139,7 @@ def main():
     # Shows GUI through a paint event. Think of it like a stack. 
     window.show()
     # Create an instance of model
-    model = NovelAlertsModel()
+    model = NovelAlertsModel(window.msgBox)
     # Create instance of the controller
     NovelAlertsCtrl(model=model, view=window)
     # Run app's event loop or main loop.
