@@ -1,2 +1,22 @@
 # novel-alerts
-This repo contains a program that will web scrape websites for new updates on novel chapters. It will have a GUI that is implemented through the Qt5 framework. Other frameworks not know currently.
+Novel alerts is a desktop GUI and an automated webscraper. The user can enter in their email, password, and any novel URL's from novelupdates.com that they want to web scrape for new updates. When those new updates are detected then a list of updated URL's will be emailed to the user.
+
+# Screenshots
+![Example of the Novel Alerts GUI](imgs/example.PNG)
+
+# Installation
+* Check out Releases
+* Should have a zip, just unzip and double click the executable
+
+# Features
+* Receive email alerts when new updates are detected from URL data.
+* Email and URL data is stored within data/
+* URL data can be deleted
+
+# How to use?
+* User must enter in email and password to enable web scraping
+* User should paste the novel URL link and press enter or delete to do either operation
+* Leave the application on and every 10 minutes it will automatically send emails of the URL's with new updates.
+
+# License
+GPL-v3.0 
