@@ -10,12 +10,14 @@
 import sys
 # Import threading to run webscraper along with GUI
 import threading
+
 # Import QApplication and the required widgets from PyQt5.QtWidgets
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QThread
 from PyQt5.QtWidgets import (QApplication, QHBoxLayout, QLabel, QLineEdit,
                              QMainWindow, QMessageBox, QPushButton,
                              QVBoxLayout, QWidget)
+
 # Import NovelAlertsCtrl class to connect view and model through controller class within client code
 from controller import NovelAlertsCtrl
 # Import NovelAlertsModel class to pass object to controller within client code
@@ -41,7 +43,7 @@ class NovelAlertsApp(QMainWindow):
 
     def __init__(self):
         """View Initializer/constructor"""
-        
+
         super().__init__()
         # Gets the title to the app window.
         self.setWindowTitle("Novel-Alerts | PyQt5 Desktop Application | Webscraper")
@@ -59,7 +61,7 @@ class NovelAlertsApp(QMainWindow):
         # Moves the window to cords on screen.
         self.move(400, 200)
         # Create and add QLabel widget to generalVLayout
-        self._createPasswordMsg()
+        self._createQLabelMsg()
         # Create and add QlineEdit Widget to generalVLayout
         self._createTextField()
         # Create and add Create/delet buttons
@@ -67,7 +69,7 @@ class NovelAlertsApp(QMainWindow):
         # Set layout properties for vertical layout
         self.generalVLayout.setContentsMargins(300, 200, 300, 225)
 
-    def _createPasswordMsg(self):
+    def _createQLabelMsg(self):
         """Creates a QLabel msg if email or password is not entered in"""
 
         # Make a list of QLabel's
@@ -169,6 +171,37 @@ class NovelAlertsApp(QMainWindow):
         alert.setText(msg)
         alert.exec_()
 
+class NovelAlertsThread(QThread):
+    """ Novel Alerts Thread Class
+
+    :param model: Object of class NovelAlertsModel
+    :type model: NovelAlertsModel
+    """
+
+    def __init__(self, model):
+        """Thread Initializer/constructor"""
+
+        QThread.__init__(self)
+        self.model = model
+
+    def __del__(self):
+        """Thread destructor"""
+
+        self.wait()
+
+    def run(self):
+        """Automaticly web scrapes for updated chapters every 10 minutes
+        
+        This function is called when NovelAlertsThread object.start() is called.
+        """
+
+        while True:
+            # Calls Web scraper
+            self.model._webScrape()
+            # Pauses the loop for 10 minutes
+            self.sleep(60 * 10)
+
+
 def main():
     """Main function"""
     # Creates an instance/object of QApplication
@@ -183,10 +216,9 @@ def main():
     model = NovelAlertsModel(window.msgBox)
     # Create instance of the controller
     NovelAlertsCtrl(model=model, view=window)
-
-    #model._webScrape
-    #threading.Thread(target=model._webScrape(), daemon=True).start()
-    
+    # Create instance of threading class and start the thread
+    thread = NovelAlertsThread(model)
+    thread.start()
     # Run app's event loop or main loop.
     # Allows for clean exit and release of memory resources.
     sys.exit(app.exec_())

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Filename: controller.py
 
 """Controller that connects data flow from the view(GUI) to the model."""
@@ -26,6 +24,10 @@ class NovelAlertsCtrl:
         self._view = view
         self._model = model
         self._connectSignals()
+
+        # Check if email is already logged and if so, clear email msg
+        if self._model.usrEmail:
+            self._view.msgList[0].setText("")
 
     def _checkEnter(self):
         """Checks text field input and enters data into NovelAlertsModel object."""
