@@ -11,16 +11,17 @@ import smtplib
 import ssl
 # Import time for sleep function to webscrape every X minutes
 import time
-#Import requests and BeautifulSoup libraries to web scrape URL's
+# Import requests and BeautifulSoup libraries to web scrape URL's
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup as soup
+
 
 class NovelAlertsModel:
     """
     A class that represents the model for the Model-View-Controller(MVC) design pattern.
 
-    :param fieldnames: List of dict key headings
-    :type fieldnames: List
+    :param fieldnames: List of dict string key headings
+    :type fieldnames: List[]
     :param file_: Location of URL data
     :type file_: String
     :param email: Location of email data
@@ -42,12 +43,6 @@ class NovelAlertsModel:
     def __init__(self, msgBox):
         """Model initializer/constructor
         
-        :param usrEmail: Users email
-        :type usrEmail: String
-        :param list_of_dict: List of dictionaries in the format: {"URL": "url_Link, "latestChapter": "chapter"}
-        :type list_of_dict: list[dict]
-        :param password: users email password
-        :type password: String
         :param msgBox: GUI msgBox method that brings up a message box
         :type msgBox: NovelAlertsApp method       
         """
@@ -58,6 +53,7 @@ class NovelAlertsModel:
         self.msgBox = msgBox
         # Initializes the csv file with column headers regardless of there being previous data
         self._writeURLData(self.list_of_dict)
+        #self._webScrape()
 
     def _getLatestChapter(self, URL):
         """Web scrapes the latest chapter from the URL link and must be from domain novelupdates.com
@@ -129,28 +125,28 @@ class NovelAlertsModel:
     def _webScrape(self):
         """Web scrapes the URL data while making a new list of URL's that have updates and sending it to the users email"""
 
-        while(True):
-            try:
-                newUpdateList = []
-                # Iterates through list of dictionaries
-                for dict_ in self.list_of_dict:
-                    # Gets the latestchapter and compares it to the current one in object/file
-                    # If it is less than the latest chapter then append to list of updated URL's and enter new chp into object
-                    latestChapter = self._getLatestChapter(dict_[self.fieldnames[0]])
-                    if dict_[self.fieldnames[1]] < latestChapter:
-                        newUpdateList.append(dict_[self.fieldnames[0]])
-                        dict_[self.fieldnames[1]] = latestChapter
+        while True:
+            while len(self.list_of_dict) != 0:
+                try:
+                    newUpdateList = []
+                    # Iterates through list of dictionaries
+                    for dict_ in self.list_of_dict:
+                        # Gets the latestchapter and compares it to the current one in object/file
+                        # If it is less than the latest chapter then append to list of updated URL's and enter new chp into object
+                        latestChapter = self._getLatestChapter(dict_[self.fieldnames[0]])
+                        if dict_[self.fieldnames[1]] < latestChapter:
+                            newUpdateList.append(dict_[self.fieldnames[0]])
+                            dict_[self.fieldnames[1]] = latestChapter
 
-                # After all URL's have been processed then write the new URL data into the csv file.
-                self._writeURLData(self.list_of_dict)
-                # Sends updated URL list to _sendEmail
-                self._sendEmail(newUpdateList)
-                    
-                #Pauses the function for X minutes, so that it can restart later
-                time.sleep(30)
-                #time.sleep(60 * 10)
-            except Exception:
-                print("Error: Webscraper did not work")
+                    # After all URL's have been processed then write the new URL data into the csv file.
+                    self._writeURLData(self.list_of_dict)
+                    # Sends updated URL list to _sendEmail
+                    self._sendEmail(newUpdateList)
+                except Exception:
+                    print("Error: Webscraper did not work")                  
+            #Pauses the function for X minutes, so that it can restart later
+            time.sleep(30)
+            #time.sleep(60 * 10)
 
     def setEmail(self, email):
         """Set the new email

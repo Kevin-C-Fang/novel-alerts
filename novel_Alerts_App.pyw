@@ -8,25 +8,40 @@
 
 #Import sys for clean closing of application memory
 import sys
-
+# Import threading to run webscraper along with GUI
+import threading
 # Import QApplication and the required widgets from PyQt5.QtWidgets
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QApplication, QHBoxLayout, QLabel, QLineEdit,
                              QMainWindow, QMessageBox, QPushButton,
                              QVBoxLayout, QWidget)
-
+# Import NovelAlertsCtrl class to connect view and model through controller class within client code
 from controller import NovelAlertsCtrl
-# Import NovelAlertsModel class to connect view and model through controller class
+# Import NovelAlertsModel class to pass object to controller within client code
 from model import NovelAlertsModel
 
-
-# Note subclass of Qmainwindow in docstring in classs
-# Create a subclass of QMainWindow to setup novel alerts GUI
 class NovelAlertsApp(QMainWindow):
-    """NovelAlertsApp View (GUI)"""
+    """NovelAlertsApp View (GUI)
+    
+    :param generalVLayout: Main layout for the central widget
+    :type : QVBoxLayout
+    :param : msgList 
+    :type : List[QLabel]
+
+    :param textF: Dictionarys that are in this format: {["Email", "Password", "URL"]: QLineEdit()}
+    :type textF: Dict[]
+    :param enterBtn: Push button for enter within a horizontal layout
+    :type enterBtn: QPushButton
+    :param deleteBtn: Push button for delete within a horizontal layout
+    :type deleteBtn: QPushButton
+
+    Subclass of QMainWindow
+    """
+
     def __init__(self):
-        """View Initializer"""
+        """View Initializer/constructor"""
+        
         super().__init__()
         # Gets the title to the app window.
         self.setWindowTitle("Novel-Alerts | PyQt5 Desktop Application | Webscraper")
@@ -53,12 +68,14 @@ class NovelAlertsApp(QMainWindow):
         self.generalVLayout.setContentsMargins(300, 200, 300, 225)
 
     def _createPasswordMsg(self):
-        """Creates a QLabel msg if password is not entered in"""
-        # Create Qlabel
+        """Creates a QLabel msg if email or password is not entered in"""
+
+        # Make a list of QLabel's
         self.msgList = []
         self.msgList.append(QLabel("<h2>Email must be entered to enable web scraping!</h2>"))
         self.msgList.append(QLabel("<h2>Password must be entered to enable web scraping!</h2>"))
 
+        # Sets QLabel properties and add to vertical layout
         for msg in self.msgList:
             msg.setAlignment(Qt.AlignCenter)
             msg.setWordWrap(True)
@@ -66,16 +83,23 @@ class NovelAlertsApp(QMainWindow):
             self.generalVLayout.addWidget(msg)
 
     def _createTextField(self):
-        """Create display for input field"""
+        """Create input fields and adds to the vertical layout"""
+
         self.textF = {}
+        # List that represents the type of data to be inputted for text fields
         dataInput = ["Email", "Password", "URL"]
 
-        # Create the textfield widget
+        # Create the textfield widget using dictionary: {dataInput[0-n]: QLineEdit()}
         for dataLabel in dataInput:
             self.textF[dataLabel] = QLineEdit()
 
         def _setTextFieldProperties(lineEditObj, placeHolder):
-            """Set textfield properties and adds QLineEdit to generalVLayout"""
+            """Set textfield properties and adds QLineEdit to generalVLayout
+            
+            :param placeHolder: placeholder text to tell the user what type of data to enter
+            :type placeHolder: String
+            """
+
             lineEditObj.setFixedHeight(35)
             lineEditObj.setFixedWidth(500)
             lineEditObj.setAlignment(Qt.AlignLeft)
@@ -84,25 +108,28 @@ class NovelAlertsApp(QMainWindow):
             # Add the textfield to the general vertical layout
             self.generalVLayout.addWidget(lineEditObj)
     
-        # Call _setTextFieldProperties to keep code DRY
+        # Iterate through dictionary and set QLineEdit properties
         for dataLabel in dataInput:
             _setTextFieldProperties(self.textF[dataLabel], dataLabel)
 
     def _createButton(self):
-        """Create display for enter/delete buttons"""
-        # horizontal layout to make buttons look better
+        """Create enter/delete buttons and add to general layout"""
+
+        # Horizontal layout to make buttons look align horizontally
         horizontalLayout = QHBoxLayout()
 
         # Create button for entering data
         self.enterBtn = QPushButton("Enter")
         self.deleteBtn = QPushButton("Delete")
+
         def _setButtonProperties(buttonObj):
             """Set button properties and add QPushButton to horizontal layout"""
+
             buttonObj.setFixedSize(60, 35)
             # Add the enter/delete buttons to the horizontal layout
             horizontalLayout.addWidget(buttonObj)
 
-        # Call _setButtonProperties to keep code DRY
+        # Call _setButtonProperties to set properties and make horizontal
         _setButtonProperties(self.enterBtn)
         _setButtonProperties(self.deleteBtn)
         # Set horizontal layout properties
@@ -111,30 +138,44 @@ class NovelAlertsApp(QMainWindow):
         self.generalVLayout.addLayout(horizontalLayout)
 
     def getDisplayText(self, textF):
-        """Get the specific text fields text"""
+        """Get the specific text fields text
+        
+        :param textF: QLineEdit widget passed in to retrieve contents
+        :type textF: QLineEdit
+        :return text: Text or contents of the QLineEdit
+        :rtype text: String
+        """
+
         return textF.text()
     
     def clearTextField(self, textF):
-        """Clears the text field when enter/delete btns are clicked"""
+        """Clears the text field of QLineEdit widgets
+        
+        :param textF: QLineEdit widget that is passed in to clear contents
+        :type textF: QLineEdit
+        """
+        
         textF.clear()
         textF.setFocus()
 
     def msgBox(self, msg):
-        """Alert box for if user tries to delete email instead of enter new one"""
+        """GUI QMessageBox to output any message such as errors or success/failure messages
+        
+        :param msg: Message to be shown on GUI through QMessageBox
+        :type msg: String
+        """
+
         alert = QMessageBox()
         alert.setText(msg)
         alert.exec_()
 
-
-
-# Client code
 def main():
     """Main function"""
     # Creates an instance/object of QApplication
     # Use sys.argv as parameter if you will have cmd-line args
     app = QApplication([])
     # Create the applications GUI.
-    # Window is a instance/object of QWidget.
+    # Window is a instance/object of GUI/QMainWindow.
     window = NovelAlertsApp()
     # Shows GUI through a paint event. Think of it like a stack. 
     window.show()
@@ -142,6 +183,10 @@ def main():
     model = NovelAlertsModel(window.msgBox)
     # Create instance of the controller
     NovelAlertsCtrl(model=model, view=window)
+
+    #model._webScrape
+    #threading.Thread(target=model._webScrape(), daemon=True).start()
+    
     # Run app's event loop or main loop.
     # Allows for clean exit and release of memory resources.
     sys.exit(app.exec_())
