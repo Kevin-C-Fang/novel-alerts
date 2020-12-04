@@ -1,7 +1,12 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\controllers",
+    "\\data",
+    "\\imgs",
+    "\\models",
+    "\\views"
   ],
-  "SelectedNode": "\\novel_Alerts_App.pyw",
+  "SelectedNode": "\\controllers",
   "PreviewInSolutionExplorer": false
 }
