@@ -5,8 +5,8 @@ Novel alerts is a desktop GUI and an automated webscraper. The user can enter in
 ![Example of the Novel Alerts GUI](imgs/example.PNG)
 
 # Installation
-* Check out Releases
-* Should have a zip, just unzip and double click the executable
+* Check out [Releases](https://github.com/kcfang2215/novel-alerts/releases).
+* Unzip and double click the executable file to run the application.
 
 # Features
 * Receive email alerts when new updates are detected from URL data.
