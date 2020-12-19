@@ -111,11 +111,6 @@ class NovelAlertsView(QMainWindow):
 
         self._general_vertical_layout.addLayout(horizontal_layout)
 
-    def getDisplayText(self, text_field: QLineEdit) -> str:
-        """Get the specific Text Fields/QtextFields text"""
-
-        return text_field.text()
-    
     def clearLineEdit(self, line_edit: QLineEdit) -> None:
         """Clears the Text Fields/QLineEdit widgets"""
         

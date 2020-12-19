@@ -50,12 +50,19 @@ class NovelAlertsModel:
         if not self._url_data:
             self._write_URL_data()
 
-    def _get_Latest_Chapter(self, URL: str) -> Union[str, None]:
-        """Web scrapes the latest chapter from the URL link and must be from domain novelupdates.com"""
-        
-        if "novelupdates" not in URL or "series" not in URL:
-            self._message_box("ERROR: URL is not from novelupdates or it is not a correct novelupdates URL")
-            return
+    # Add function that figures out which website is added and get call different versions of latest chapter functions
+    def _get_Latest_Chapter_URL_Filtered(self, URL: str) -> Union[str, None]:
+        """Choose a different version of the get latest chapter function by using the URL"""
+
+        if "wln" in URL and "series-id" in URL: 
+            return self._get_WLN_Latest_Chapter(URL)
+        elif "novelupdates" in URL and "series" in URL:
+            return self._get_Novelupdates_Latest_Chapter(URL)
+        else:
+            self._message_box("ERROR: URL is not correct or from wlnupdates or novelupdates domain")
+
+    def _get_WLN_Latest_Chapter(self, URL: str) -> Union[str, None]:
+        """Web scrapes the latest chapter from the URL link and must be from domain https://www.wlnupdates.com/"""
 
         try:
             # Title: How to Web Scrape using Beautiful Soup in Python without running into HTTP error 403
@@ -68,6 +75,23 @@ class NovelAlertsModel:
             webpage = urlopen(req).read()
             # Creates Bs4 object with arguments consisting of html to be parsed and which parser to use.
             page_soup = soup(webpage, "html.parser")
+            # Uses the soup object to find 'h5' tags within the html
+            # .text is used to grab the text within the tag and nothing else.
+            # [17:] is used to splice the text string to not include "Latest release - "
+            # Ex. <h5>Latest release - vol 2.0  chp. 351.0</h5>
+            latest_chapter = page_soup.find("h5").text[17:]
+            return latest_chapter
+        except Exception:
+            # Returns None if latest chapter could not be found
+            self._message_box("ERROR: Could not find the latest chapter and was not entered into the data.")
+
+    def _get_Novelupdates_Latest_Chapter(self, URL: str) -> Union[str, None]:
+        """Web scrapes the latest chapter from the URL link and must be from domain https://www.novelupdates.com/"""
+
+        try:
+            req = Request(URL, headers={"User-Agent": "Mozilla/5.0"})
+            webpage = urlopen(req).read()
+            page_soup = soup(webpage, "html.parser")
             # Uses the soup object to find all 'a' tags with the class 'chp-release'
             # Uses the bracket to access the first result which is the latest chp
             # .text is used to grab the text within the tag and nothing else.
@@ -75,7 +99,7 @@ class NovelAlertsModel:
             latest_chapter = page_soup.findAll("a", "chp-release")[0].text
             return latest_chapter
         except Exception:
-            self._message_box("ERROR: Could not find latest chapter")
+            self._message_box("ERROR: Could not find the latest chapter and was not entered into the data.")
 
     def _send_email(self, updated_URLS: list[str]) -> None:
         """Sends a email to user with a list of URL's that have new updates"""
@@ -116,18 +140,20 @@ class NovelAlertsModel:
                 for dict_ in self._url_data:
                     # Gets the latestchapter and compare it to the current one in object
                     # If it is less than the latest chapter then append URL to list of updated URL's and set new chapter into object
-                    latest_chapter = self._get_Latest_Chapter(dict_[self.FIELD_NAMES[0]])
+                    # No need to check for None from function call because webscraping the URL has worked if it is already in data structure.
+                    latest_chapter = self._get_Latest_Chapter_URL_Filtered(dict_[self.FIELD_NAMES[0]])
+
                     if dict_[self.FIELD_NAMES[1]] < latest_chapter:
                         updated_URLS.append(dict_[self.FIELD_NAMES[0]])
                         dict_[self.FIELD_NAMES[1]] = latest_chapter
         
-                # After all URL's have been processed, write the new URL data into the csv file.
-                self._write_URL_data()
-
+                # If there were new updated novels
                 if updated_URLS:
+                    # write the new latest chapter data into the csv file.
+                    self._write_URL_data()
                     self._send_email(updated_URLS)
             except Exception:
-                self._message_box("Error: Webscraper did not work")                  
+                self._message_box("Error: Webscraper did not work. If this continues then restart program.")                  
 
     def setEmail(self, email: str) -> None:
         """Set the new email and saves it to email file"""
@@ -162,12 +188,18 @@ class NovelAlertsModel:
     def addURLData(self, URL: str) -> None:
         """Add the new URL to the dictionary and csv file"""
 
-        # Gets the latest chapter and if return type is None, then function call did not get latest chapter
-        latest_chapter = self._get_Latest_Chapter(URL)
-        if latest_chapter == None:
+        for dict_ in self._url_data:
+            if dict_["URL"] == URL:
+                self._message_box("ERROR: URL is already in data structure")
+                return
+        
+        # Gets the latest chapter and if return type is None, then function call did not get latest chapter and doesn't add it to data.
+        latest_chapter = self._get_Latest_Chapter_URL_Filtered(URL)
+        if latest_chapter == None: 
             return
         
         dict_row = {self.FIELD_NAMES[0]: URL, self.FIELD_NAMES[1]: latest_chapter}
+
         self._url_data.append(dict_row)
 
         with open(self.URL_FILE_PATH, mode='a') as csv_file:

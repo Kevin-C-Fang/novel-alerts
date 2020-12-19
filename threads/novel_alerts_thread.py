@@ -37,8 +37,5 @@ class NovelAlertsThread(QThread):
         """Automaticly web scrapes for updated chapters every 10 minutes"""
 
         while True:
-            try:
-                self.model.webScrape()
-                self.sleep(60 * 10)
-            except Exception:
-                self._message_box("ERROR: Web scraper did not work")
+            self.model.webScrape()
+            self.sleep(60 * 10)
