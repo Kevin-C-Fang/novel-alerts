@@ -1,5 +1,5 @@
 # novel-alerts
-Novel alerts is a desktop GUI and an automated webscraper. The user can enter in their email, password, and any novel URL's from novelupdates.com that they want to web scrape for new updates. When those new updates are detected then a list of updated URL's will be emailed to the user.
+Novel alerts is a desktop GUI and an automated webscraper. The user can enter in their email, password, and any novel URL's from novelupdates.com and wlnupdates.com that they want to web scrape for new updates. When those new updates are detected then a list of updated URL's will be emailed to the user.
 
 # Screenshot
 ![Example of the Novel Alerts GUI](imgs/example.PNG)

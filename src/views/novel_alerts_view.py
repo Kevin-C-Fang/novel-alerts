@@ -43,13 +43,13 @@ class NovelAlertsView(QMainWindow):
 
         self.move(400, 200)
 
-        self._createQLabelMsg()
+        self._create_Qlabel_msg()
         self._create_text_fields()
         self._create_button()
 
         self._general_vertical_layout.setContentsMargins(300, 200, 300, 225)
 
-    def _createQLabelMsg(self) -> None:
+    def _create_Qlabel_msg(self) -> None:
         """Creates a QLabel messages that tells if the email and password have been entered"""
 
         self.messages = [QLabel("<h2>Email must be entered to enable web scraping!</h2>"), 
@@ -57,6 +57,7 @@ class NovelAlertsView(QMainWindow):
 
         def _set_label_message_properties(label_object: QLabel) -> None:
             """Set QLabel properties and add to vertical layout"""
+
             label_object.setAlignment(Qt.AlignCenter)
             label_object.setWordWrap(True)
 
@@ -70,11 +71,11 @@ class NovelAlertsView(QMainWindow):
 
         self.textFields = {}
         # Type of data to be inputted for text fields and Key for dict
-        dataInput = ["Email", "Password", "URL"]
+        types = ["Email", "Password", "URL"]
 
         # Create dictionary holding {"type": QLineEdit}
-        for dataLabel in dataInput:
-            self.textFields[dataLabel] = QLineEdit()
+        for type_ in types:
+            self.textFields[type_] = QLineEdit()
 
         def _set_text_field_properties(lineEditObj: QLineEdit, placeHolder: str) -> None:
             """Set lineEditield properties and adds QLineEdit to _general_vertical_layout"""
@@ -87,16 +88,15 @@ class NovelAlertsView(QMainWindow):
 
             self._general_vertical_layout.addWidget(lineEditObj)
     
-        for dataLabel in dataInput:
-            _set_text_field_properties(self.textFields[dataLabel], dataLabel)
+        for type_ in types:
+            _set_text_field_properties(self.textFields[type_], type_)
 
     def _create_button(self) -> None:
         """Create enter/delete buttons and add to general layout"""
 
         horizontal_layout = QHBoxLayout()
 
-        self.enterButton = QPushButton("Enter")
-        self.deleteButton = QPushButton("Delete")
+        self.buttons = [QPushButton("Enter"), QPushButton("Delete")]
 
         def _set_button_properties(button: QPushButton) -> None:
             """Set button properties and add QPushButton to horizontal layout"""
@@ -104,11 +104,10 @@ class NovelAlertsView(QMainWindow):
             button.setFixedSize(60, 35)
             horizontal_layout.addWidget(button)
 
-        _set_button_properties(self.enterButton)
-        _set_button_properties(self.deleteButton)
+        for button in self.buttons:
+            _set_button_properties(button)
 
         horizontal_layout.setContentsMargins(200, 0, 200, 0)
-
         self._general_vertical_layout.addLayout(horizontal_layout)
 
     def clearLineEdit(self, line_edit: QLineEdit) -> None:

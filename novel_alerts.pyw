@@ -12,10 +12,10 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication
 
 # Import MVC and thread file to run GUI
-from models.novel_alerts_model import NovelAlertsModel
-from views.novel_alerts_view import NovelAlertsView
-from controllers.novel_alerts_controller import NovelAlertsController
-from threads.novel_alerts_thread import NovelAlertsThread
+from src.models.novel_alerts_model import NovelAlertsModel
+from src.views.novel_alerts_view import NovelAlertsView
+from src.controllers.novel_alerts_controller import NovelAlertsController
+from src.threads.novel_alerts_thread import NovelAlertsThread
 
 
 def main():
@@ -27,7 +27,7 @@ def main():
     window.show()
 
     model = NovelAlertsModel(window.msgBox)
-    NovelAlertsController(model=model, view=window)
+    NovelAlertsController(model_Obj=model, view_Obj=window)
 
     thread = NovelAlertsThread(model, window.msgBox)
     thread.start()

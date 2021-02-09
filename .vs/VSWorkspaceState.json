@@ -1,10 +1,7 @@
 {
   "ExpandedNodes": [
     "",
-    "\\controllers",
-    "\\models",
-    "\\views"
+    "\\models"
   ],
-  "SelectedNode": "\\novel_alerts.pyw",
   "PreviewInSolutionExplorer": false
 }

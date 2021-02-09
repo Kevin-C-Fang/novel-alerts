@@ -21,7 +21,7 @@ class NovelAlertsThread(QThread):
     Subclass of QThread
     """
 
-    def __init__(self, model: object, message_box: Callable) -> None:
+    def __init__(self, model: object, message_box: Callable=print) -> None:
         """Thread Initializer"""
 
         QThread.__init__(self)
@@ -37,5 +37,5 @@ class NovelAlertsThread(QThread):
         """Automaticly web scrapes for updated chapters every 10 minutes"""
 
         while True:
-            self.model.webScrape()
+            self.model._webscrape_Check()
             self.sleep(60 * 10)

@@ -20,8 +20,8 @@ class NovelAlertsModel:
 
     :param FIELD_NAMES: List of dict string key headings
     :type FIELD_NAMES: List[str]
-    :param URL_FILE_PATH: File path of URL data
-    :type URL_FILE_PATH: str
+    :param _URL_file_path: File path of URL data
+    :type _URL_file_path: str
     :param EMAIL_FILE_PATH: File path of email data
     :type EMAIL_FILE_PATH: str
     :param _user_email: Users email
@@ -35,33 +35,33 @@ class NovelAlertsModel:
     """
 
     FIELD_NAMES = ["URL", "latestChapter"]
-    URL_FILE_PATH = "data/urlLog.csv"
-    EMAIL_FILE_PATH = "data/email.txt"
 
-    def __init__(self, message_box: Callable) -> None:
+    def __init__(self, message_box: Callable=print, URL_path: str="data/URL_log.csv", email_path: str="data/email.txt") -> None:
         """Model Initializer"""
 
+        self._URL_file_path = URL_path
+        self._email_file_path = email_path
         self._user_email = self._load_email()
-        self._url_data = self._load_URL_data()
+        self._url_data = self._load_URL_Data()
         self._password = ""
         self._message_box = message_box 
         
         # Initializes the csv file with column headers if there was no previous data.
         if not self._url_data:
-            self._write_URL_data()
+            self._write_URL_data_to_file()
 
     # Add function that figures out which website is added and get call different versions of latest chapter functions
     def _get_Latest_Chapter_URL_Filtered(self, URL: str) -> Union[str, None]:
         """Choose a different version of the get latest chapter function by using the URL"""
 
         if "wln" in URL and "series-id" in URL: 
-            return self._get_WLN_Latest_Chapter(URL)
+            return self._webscrape_WLN_Latest_Chapter(URL)
         elif "novelupdates" in URL and "series" in URL:
-            return self._get_Novelupdates_Latest_Chapter(URL)
+            return self._webscrape_Novelupdates_Latest_Chapter(URL)
         else:
             self._message_box("ERROR: URL is not correct or from wlnupdates or novelupdates domain")
 
-    def _get_WLN_Latest_Chapter(self, URL: str) -> Union[str, None]:
+    def _webscrape_WLN_Latest_Chapter(self, URL: str) -> Union[str, None]:
         """Web scrapes the latest chapter from the URL link and must be from domain https://www.wlnupdates.com/"""
 
         try:
@@ -85,7 +85,7 @@ class NovelAlertsModel:
             # Returns None if latest chapter could not be found
             self._message_box("ERROR: Could not find the latest chapter and was not entered into the data.")
 
-    def _get_Novelupdates_Latest_Chapter(self, URL: str) -> Union[str, None]:
+    def _webscrape_Novelupdates_Latest_Chapter(self, URL: str) -> Union[str, None]:
         """Web scrapes the latest chapter from the URL link and must be from domain https://www.novelupdates.com/"""
 
         try:
@@ -101,7 +101,17 @@ class NovelAlertsModel:
         except Exception:
             self._message_box("ERROR: Could not find the latest chapter and was not entered into the data.")
 
-    def _send_email(self, updated_URLS: list[str]) -> None:
+    def _integrate_Updated_URLS(self, updated_URLS: list[str]) -> str:
+        """Integrate updated urls into a string"""
+
+        message = """"""
+
+        for url in updated_URLS:
+            message += f"""{url}\n"""
+
+        return message
+
+    def _send_Email(self, updated_URLS: list[str]) -> None:
         """Sends a email to user with a list of URL's that have new updates"""
 
         # Title: Sending Emails with Python
@@ -110,12 +120,8 @@ class NovelAlertsModel:
 
         # For SSL
         port = 465 
-        message = """
-        New updates: 
-        """
 
-        for url in updated_URLS:
-            message += f"\t{url}\n"
+        message = self._integrate_Updated_URLS(updated_URLS)
 
         # default context validates host name, certificates, and optimizes security of connection
         context = ssl.create_default_context()
@@ -131,57 +137,72 @@ class NovelAlertsModel:
         except Exception:
             self._message_box("ERROR: Server connection could not be established!")
 
-    def webScrape(self) -> None:
-        """Web scrapes the URL data while making a new list of URL's that have updates and sending it to the users email"""
+    def _compile_updated_URLS(self) -> list[str]:
+        """Compiles a list of updated URLS by comparing current chapters with new chapters"""
+
+        updated_URLS = []
+        for dict_ in self._url_data:
+            # Gets the latestchapter and compare it to the current one in object
+            # If it is less than the latest chapter then append URL to list of updated URL's and set new chapter into object
+            # No need to check for None from function call because webscraping the URL has worked if it is already in data structure.
+            latest_chapter = self._get_Latest_Chapter_URL_Filtered(dict_[self.FIELD_NAMES[0]])
+            if latest_chapter == None:
+                continue
+
+            if dict_[self.FIELD_NAMES[1]] < latest_chapter:
+                updated_URLS.append(dict_[self.FIELD_NAMES[0]])
+                dict_[self.FIELD_NAMES[1]] = latest_chapter
+
+        return updated_URLS
+
+    def _webscrape_Check(self) -> Union[int, None]:
+        """Check if there are new updates and sends that data to _send_Email"""
 
         if self._url_data:
             try:
-                updated_URLS = []
-                for dict_ in self._url_data:
-                    # Gets the latestchapter and compare it to the current one in object
-                    # If it is less than the latest chapter then append URL to list of updated URL's and set new chapter into object
-                    # No need to check for None from function call because webscraping the URL has worked if it is already in data structure.
-                    latest_chapter = self._get_Latest_Chapter_URL_Filtered(dict_[self.FIELD_NAMES[0]])
-
-                    if dict_[self.FIELD_NAMES[1]] < latest_chapter:
-                        updated_URLS.append(dict_[self.FIELD_NAMES[0]])
-                        dict_[self.FIELD_NAMES[1]] = latest_chapter
+                updated_URLS = self._compile_updated_URLS()
         
                 # If there were new updated novels
                 if updated_URLS:
                     # write the new latest chapter data into the csv file.
-                    self._write_URL_data()
-                    self._send_email(updated_URLS)
+                    self._write_URL_data_to_file()
+                    self._send_Email(updated_URLS)
             except Exception:
-                self._message_box("Error: Webscraper did not work. If this continues then restart program.")                  
+                self._message_box("Error: Webscraper did not work. If this continues then restart program.")
 
     def setEmail(self, email: str) -> None:
         """Set the new email and saves it to email file"""
 
         self._user_email = email
 
-        with open(self.EMAIL_FILE_PATH, "w") as email_file:
+        with open(self._email_file_path, "w") as email_file:
             email_file.write(self._user_email)
 
     def _load_email(self) -> str:
         """Loads the email from email file into class property"""
 
-        with open(self.EMAIL_FILE_PATH, "r") as email_file:
+        with open(self._email_file_path, "r") as email_file:
             return email_file.read()
 
     def getEmail(self) -> str:
         """Returns email of the user"""
+
         return self._user_email
     
     def setPassword(self, password: str) -> None:
         """Set the password"""
 
-        self.password = password
+        self._password = password
 
-    def _load_URL_data(self) -> list[dict[str, str]]:
+    def getPassword(self) -> str:
+        """Gets the password"""
+
+        return self._password
+
+    def _load_URL_Data(self) -> list[dict[str, str]]:
         """Opens csv file to be read into a list of dictionarys"""
 
-        with open(self.URL_FILE_PATH, mode='r') as csv_file:
+        with open(self._URL_file_path, mode='r') as csv_file:
             reader = csv.DictReader(csv_file)
             return list(map(dict, reader))
 
@@ -202,14 +223,23 @@ class NovelAlertsModel:
 
         self._url_data.append(dict_row)
 
-        with open(self.URL_FILE_PATH, mode='a') as csv_file:
+        with open(self._URL_file_path, mode='a') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=self.FIELD_NAMES)
             writer.writerow(dict_row)
 
-    def _write_URL_data(self) -> None:
+    def _get_URL_data(self) -> list[dict[str, str]]:
+        """Gets the current URL data within the object"""
+        return self._url_data
+
+    def _set_URL_data(self, URL_data: list[dict[str, str]]) -> None:
+        """Sets the URL data to the object and file"""
+        self._url_data = URL_data
+        self._write_URL_data_to_file()
+
+    def _write_URL_data_to_file(self) -> None:
         """Writes current object _url_data into the csv file"""
 
-        with open(self.URL_FILE_PATH, mode='w') as csv_file:
+        with open(self._URL_file_path, mode='w') as csv_file:
             # DictWriter object that allows for file output with dictionary keys as fieldnames/columns/headers
             writer = csv.DictWriter(csv_file, fieldnames=self.FIELD_NAMES)
 
@@ -224,7 +254,7 @@ class NovelAlertsModel:
             if dict_[self.FIELD_NAMES[0]] == URL:
                 self._url_data.remove(dict_)
                 self._message_box("Success")
-                self._write_URL_data()
+                self._write_URL_data_to_file()
                 return
         
         # Calls msgBox because URL data has been iterated through and match was not found
